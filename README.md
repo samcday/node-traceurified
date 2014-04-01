@@ -23,7 +23,7 @@ export var go = function() {
 
 *lib.js*
 ```
-export omggenerators = function*() {
+export var omggenerators = function*() {
     yield 123;
 }
 ```
