@@ -4,7 +4,7 @@ Easily use Google's awesome-sauce [traceur-compiler](https://github.com/google/t
 
 *bootstrap.js*
 ```
-require("traceurify")(function() {
+require("traceurified")(function() {
     return true; 
 });
 
@@ -44,7 +44,7 @@ npm install traceurified
 ## API
 
 ```
-require("traceurify")(function(file) {
+require("traceurified")(function(file) {
     return true; 
 });
 ```
