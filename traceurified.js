@@ -19,7 +19,7 @@ module.exports = function(filter) {
 
     // Rewrite callsites to:
     // * use source mapped positions, if available.
-    // * filter out traceurify eval frames.
+    // * filter out traceur eval frames.
     chain.filter.attach(function (error, frames) {
         return frames.filter(function (callSite) {
             if (callSite.isEval()) {
