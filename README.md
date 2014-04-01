@@ -16,15 +16,15 @@ app.go()
 ```
 import {omggenerators} from "./lib";
 
-export var go = function() {
-    return omggenerators().next();
+export var go = () => omggenerators().next()
 };
 ```
 
 *lib.js*
 ```
 export var omggenerators = function*() {
-    yield 123;
+    var [harmony, ...isawesome] = ["lol!", "you", "bet!"];
+    yield isawesome.join(" ");
 }
 ```
 
