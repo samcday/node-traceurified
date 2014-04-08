@@ -1,0 +1,16 @@
+{
+  "name": "istanbul-scratch",
+  "version": "0.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "source-map": "^0.1.33",
+    "traceur": "0.0.32",
+    "istanbul": "^0.2.7"
+  }
+}
