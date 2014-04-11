@@ -10,7 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "source-map": "^0.1.33",
-    "traceur": "0.0.32",
+    "traceur": "0.0.33",
     "istanbul": "^0.2.7"
   }
 }

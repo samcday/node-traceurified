@@ -79,12 +79,19 @@ function translateCoverage(covFile) {
 
         if (pos.source !== "./es6.js") {
             var line = byLine[statement.start.line-1];
+            console.log("'" + line.substring(statement.start.column)+"'");
             if (line.substring(statement.start.column).startsWith("return")) {
                 statement.start.column += "return".length;
                 pos = compiled.map.originalPositionFor({line: statement.start.line, column: statement.start.column});
             }
             else if (line.substring(statement.start.column).startsWith("(function")) {
                 statement.start.column++;
+                pos = compiled.map.originalPositionFor({line: statement.start.line, column: statement.start.column});
+            } else if (line.substring(statement.start.column).startsWith("Promise.resolve(")) {
+                statement.start.column += "Promise.resolve(".length;
+                pos = compiled.map.originalPositionFor({line: statement.start.line, column: statement.start.column});
+            } else if (line.substring(statement.start.column).startsWith("$ctx.returnValue =")) {
+                statement.start.column += "$ctx.returnValue =".length;
                 pos = compiled.map.originalPositionFor({line: statement.start.line, column: statement.start.column});
             }
         }
@@ -132,9 +139,16 @@ function translateCoverage(covFile) {
             // }
         }
 
-        console.log("'"+originalByLine[pos.line-1].substring(pos.column - "yield ".length, pos.column)+"'");
         if (originalByLine[pos.line-1].substring(pos.column - "yield ".length, pos.column) === "yield ") {
             startColDelta = -6;
+        }
+
+        if (originalByLine[pos.line-1].substring(pos.column - "await ".length, pos.column) === "await ") {
+            startColDelta = -6;
+        }
+
+        if (originalByLine[pos.line-1].substring(pos.column - "return ".length, pos.column) === "return ") {
+            startColDelta = -7;
         }
 
         translateLoc(compiled.map, statement);

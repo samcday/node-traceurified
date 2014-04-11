@@ -1,13 +1,18 @@
-var fn = () => 123;
-var uncalled = foo => 123;
-var block = () => { console.log(); }
+var foo = () => Promise.resolve(123);
 
-var foo = function*() { 
-    console.log("I get called. See?");
-    true ? fn() : console.log("Dead branch.");
-    yield true ? fn() : console.log("Dead branch.");
-    console.log("I don't get called.");
+var async = async function() {
+    await foo(); true ? console.log("yes.") : console.log("no.");
+    return 123;
+    return Math.min(123, 123);
+    await foo();
 }
 
-foo().next();
-foo().next();
+async();
+
+// var gen = function*() {
+//     yield 123;
+//     yield 123;
+//     yield 123;
+// }
+
+// gen().next();
