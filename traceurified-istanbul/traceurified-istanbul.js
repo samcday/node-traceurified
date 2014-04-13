@@ -5,6 +5,26 @@ var MozillaParseTreeTransformer = require("./MozillaParseTreeTransformer");
 
 var ParseTreeVisitor = traceur.System.get(traceur.System.map.traceur + "/src/syntax/ParseTreeVisitor").ParseTreeVisitor;
 
+// Converts a Traceur source location item to a Spidermonkey AST one.
+function convertLocationNode(location) {
+  if (!location) {
+    return undefined;
+  }
+
+  return {
+      start: {
+        line: location.start.line + 1,
+        column: location.start.column,
+        source: location.start.source.name,
+      },
+      end: {
+        line: location.end.line + 1,
+        column: location.end.column,
+        source: location.end.source.name
+      }
+  };
+}
+
 /**
  * Traverses both the original ES6 parse tree and the transformed tree to
  * fix up the source locations, so that Istanbul reports correctly.
@@ -13,45 +33,37 @@ function prepareAst(filename, es5Ast, es6Ast) {
   // Locations of all generators, indexed in order that we saw them.
   var generatorPositions = [];
 
+  // Visit all the nodes in the original tree first. Save off some info on
+  // where things are.
+
   var visitor = new ParseTreeVisitor();
   visitor.visitFunctionDeclaration = function(tree) {
     if ((tree.functionKind.type === "*" || tree.functionKind.value === "async") && tree.location && tree.location.start.source.name === filename) {
       generatorPositions.push({
-        gen: {
-          start: {
-            line: tree.location.start.line + 1,
-            column: tree.location.start.column,
-            source: filename
-          },
-          end: {
-            line: tree.location.end.line + 1,
-            column: tree.location.end.column,
-            source: filename
-          }
-        },
-        body: {
-          start: {
-            line: tree.functionBody.location.start.line + 1,
-            column: tree.functionBody.location.start.column,
-            source: filename
-          },
-          end: {
-            line: tree.functionBody.location.end.line + 1,
-            column: tree.functionBody.location.end.column,
-            source: filename
-          }
-        }
+        yields: [],
+        gen: convertLocationNode(tree.location),
+        body: convertLocationNode(tree.functionBody.location)
       });
     }
-  }
+
+    ParseTreeVisitor.prototype.visitFunctionDeclaration.call(this, tree);
+  };
+
+  visitor.visitYieldExpression = function(tree) {
+    var generatorInfo = generatorPositions[generatorPositions.length - 1];
+    generatorInfo.yields.push({
+      statement: convertLocationNode(tree.location),
+      expr: convertLocationNode(tree.expression.location)
+    });
+    ParseTreeVisitor.prototype.visitYieldExpression.call(this, tree);
+  };
 
   visitor.visitAny(es6Ast);
 
-  // Visit all the nodes in the original tree first. Save off some info on
-  // where things are.
-
   var functionStack = [];
   var generatorIdx = 0;
+  var yieldIdx = 0;
+  var inGenerator = false;
   estraverse.traverse(es5Ast, {
     enter: function(node, parent) {
       // Nuke location info that doesn't match our expected source file.
@@ -66,11 +78,12 @@ function prepareAst(filename, es5Ast, es6Ast) {
       // If we later discover this is a generator, we replace the top of the 
       // stack with the index of the generator.
       if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") {
+        inGenerator = functionStack[functionStack.length - 1] > -1;
         functionStack.push(-1);
       }
 
       // If this node is a call to $traceurRuntime.generatorWrap, we just
-      // entered a generator function. Mark this one on the stack, 
+      // entered a generator function.
       if (node.type === "CallExpression" &&
           node.callee.type === "MemberExpression" &&
           node.callee.object.name === "$traceurRuntime" &&
@@ -84,6 +97,18 @@ function prepareAst(filename, es5Ast, es6Ast) {
       // with no location information.
       if (node.type === "FunctionExpression" && node.body.type === "BlockStatement" && !node.body.loc) {
         node.body.loc = node.loc;
+      }
+
+      if (node.type === "ReturnStatement" && !node.loc && inGenerator) {
+        var genInfo = generatorPositions[functionStack[functionStack.length - 2]];
+
+        if (node.argument.loc && node.argument.loc.start.source === filename) {
+          var yieldLoc = genInfo.yields[yieldIdx];
+          var exprLoc = node.argument.loc;
+          if (yieldLoc.expr.start.line === exprLoc.start.line && yieldLoc.expr.start.column === exprLoc.start.column) {
+            node.loc = yieldLoc.statement;
+          }
+        }
       }
 
       // Attach location info to expressions that assign to $ctx.returnValue. These
@@ -106,6 +131,8 @@ function prepareAst(filename, es5Ast, es6Ast) {
           node.loc = generatorPositions[generatorIdx].gen;
           node.body.loc = generatorPositions[generatorIdx].body;
         }
+        yieldIdx = 0;
+        inGenerator = functionStack.length >= 2 && functionStack[functionStack.length - 2] > -1;
       }
     }
   });

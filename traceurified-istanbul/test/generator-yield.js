@@ -55,7 +55,7 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 2,
-                    "column": 13,
+                    "column": 11,
                     "source": "file.js"
                 }
             },
@@ -76,4 +76,4 @@ var expectedCoverage = {
     }
 }
 
-describe("Generator yield", setupCoverageTest.bind(null, code, expectedCoverage, true));
+describe("Generator yield", setupCoverageTest.bind(null, code, expectedCoverage, false));

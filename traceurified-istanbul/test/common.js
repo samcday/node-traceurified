@@ -21,7 +21,7 @@ export function setupCoverageTest(code, expectedCoverage, debug) {
     eval(instrumented);
 
     if (debug) {
-      console.log("Coverage: ", global[coverageVar]);
+      console.log("Coverage: ", JSON.stringify(global[coverageVar], null, 2));
     }
 
     expect(global[coverageVar]).to.deep.equal(expectedCoverage);
