@@ -1,16 +1,15 @@
 {
-  "name": "istanbul-scratch",
+  "name": "traceurified-mocha",
   "version": "0.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Mocha integration for Traceurified.",
+  "main": "traceurified-mocha.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "source-map": "^0.1.33",
-    "traceur": "0.0.33",
+    "estraverse": "^1.5.0",
     "istanbul": "^0.2.7"
   }
 }
