@@ -1,9 +1,9 @@
 import { setupCoverageTest } from "./common";
 
-var code = `function *foo() {
+var code = `async function foo() {
   console.log("Generator.");
 }
-foo().next();`;
+foo();`;
 
 var expectedCoverage = {
     "file.js": {
@@ -29,7 +29,7 @@ var expectedCoverage = {
                     },
                     "end": {
                         "line": 1,
-                        "column": 16
+                        "column": 21
                     }
                 }
             }
@@ -67,7 +67,7 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 4,
-                    "column": 13,
+                    "column": 6,
                     "source": "file.js"
                 }
             }
@@ -76,4 +76,4 @@ var expectedCoverage = {
     }
 }
 
-describe("Basic generator", setupCoverageTest.bind(null, code, expectedCoverage));
+describe("Basic async", setupCoverageTest.bind(null, code, expectedCoverage));

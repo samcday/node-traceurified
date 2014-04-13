@@ -15,7 +15,7 @@ function prepareAst(filename, es5Ast, es6Ast) {
 
   var visitor = new ParseTreeVisitor();
   visitor.visitFunctionDeclaration = function(tree) {
-    if (tree.functionKind.type === "*" && tree.location && tree.location.start.source.name === filename) {
+    if ((tree.functionKind.type === "*" || tree.functionKind.value === "async") && tree.location && tree.location.start.source.name === filename) {
       generatorPositions.push({
         gen: {
           start: {
@@ -74,7 +74,8 @@ function prepareAst(filename, es5Ast, es6Ast) {
       if (node.type === "CallExpression" &&
           node.callee.type === "MemberExpression" &&
           node.callee.object.name === "$traceurRuntime" &&
-          node.callee.property.name === "generatorWrap") {
+          (node.callee.property.name === "generatorWrap" ||
+           node.callee.property.name === "asyncWrap")) {
         functionStack.pop();
         functionStack.push(generatorIdx++);
       }
