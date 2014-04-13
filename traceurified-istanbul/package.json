@@ -4,7 +4,7 @@
   "description": "Istanbul integration for Traceurified.",
   "main": "traceurified-istanbul.js",
   "scripts": {
-    "test": "mocha --compilers js:traceurified-mocha"
+    "test": "mocha --compilers js:traceurified-mocha -R spec"
   },
   "author": "Sam Day <sday@atlassian.com>",
   "license": "Commercial",
@@ -13,6 +13,7 @@
     "istanbul": "^0.2.7"
   },
   "devDependencies": {
-    "chai": "^1.9.1"
+    "chai": "^1.9.1",
+    "escodegen": "^1.3.1"
   }
 }

@@ -15,6 +15,7 @@ function Traceurified(filter) {
   var SourceFile = traceur.syntax.SourceFile;
   var TreeWriter = traceur.outputgeneration.TreeWriter;
 
+  Traceurified.traceur = traceur;
   Traceurified.sourceMaps = {};
   Traceurified.ast = {};
   Traceurified.processedAst = {};

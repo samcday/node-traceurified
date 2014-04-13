@@ -35,6 +35,8 @@ MozillaParseTreeTransformer.prototype.transformAny = function(tree) {
     return this.transformIdentifier(tree);
   }
 
+  // console.log(tree.type);
+
   return ParseTreeTransformer.prototype.transformAny.call(this, tree);
 };
 
@@ -56,7 +58,7 @@ MozillaParseTreeTransformer.prototype.transformFunctionDeclaration = function(tr
   return this.createNode(tree, {
     type: tree.type === "FUNCTION_EXPRESSION" ? "FunctionExpression" : "FunctionDeclaration",
     id: this.transformAny(tree.name),
-    params: this.transformAny(tree.parameterList),
+    params: this.transformAny(tree.parameterList) || [],
     body: this.transformAny(tree.functionBody)
   });
 };
