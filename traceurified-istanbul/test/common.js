@@ -20,6 +20,10 @@ export function setupCoverageTest(code, expectedCoverage, debug) {
 
     eval(instrumented);
 
+    if (debug) {
+      console.log("Coverage: ", global[coverageVar]);
+    }
+
     expect(global[coverageVar]).to.deep.equal(expectedCoverage);
   });
 }
