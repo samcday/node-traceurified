@@ -32,6 +32,7 @@ function convertLocationNode(location) {
 function prepareAst(filename, es5Ast, es6Ast) {
   // Locations of all generators, indexed in order that we saw them.
   var generatorPositions = [];
+  var defaultParams = [];
 
   // Visit all the nodes in the original tree first. Save off some info on
   // where things are.
@@ -67,6 +68,17 @@ function prepareAst(filename, es5Ast, es6Ast) {
     ParseTreeVisitor.prototype.visitYieldExpression.call(this, tree);
   };
 
+  visitor.visitFormalParameter = function(tree) {
+    if (tree.parameter && tree.parameter.initialiser) {
+      defaultParams.push({
+        expr: convertLocationNode(tree.parameter.initialiser.location),
+        param: convertLocationNode(tree.location)
+      });
+    }
+
+    // ParseTreeVisitor.prototype.visitFormalParameter.apply(this, tree);
+  };
+
   visitor.visitAny(es6Ast);
 
   var functionStack = [];
@@ -91,8 +103,8 @@ function prepareAst(filename, es5Ast, es6Ast) {
         functionStack.push(-1);
       }
 
-      // If this node is a call to $traceurRuntime.generatorWrap, we just
-      // entered a generator function.
+      // If this node is a call to $traceurRuntime.(async|generator)Wrap, we 
+      // just entered a generator function.
       if (node.type === "CallExpression" &&
           node.callee.type === "MemberExpression" &&
           node.callee.object.name === "$traceurRuntime" &&
@@ -131,6 +143,21 @@ function prepareAst(filename, es5Ast, es6Ast) {
           // TODO: properly figure out where the return statement in original
           // source began.
           node.loc.start.column -= 7;
+      }
+
+      var possibleDefaultParam = defaultParams[0];
+      if (node.type === "ConditionalExpression" && node.alternate &&
+          node.alternate.loc &&
+          node.alternate.loc.start.column === possibleDefaultParam.expr.start.column &&
+          node.alternate.loc.start.line === possibleDefaultParam.expr.start.line &&
+          node.alternate.loc.start.file === possibleDefaultParam.expr.start.file) {
+        defaultParams.shift();
+        node.loc = possibleDefaultParam.param;
+        node.consequent.loc = JSON.parse(JSON.stringify(possibleDefaultParam.expr));
+        // TODO: temporary dirty hack. Fix me!
+        node.consequent.loc.end.line = node.consequent.loc.start.line;
+        node.consequent.loc.end.column = node.consequent.loc.start.column - 1;
+        node.alternate.loc = JSON.parse(JSON.stringify(possibleDefaultParam.expr));
       }
     },
     leave: function(node, parent) {

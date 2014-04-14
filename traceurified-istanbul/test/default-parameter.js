@@ -11,10 +11,13 @@ var expectedCoverage = {
         "s": {
             "1": 1,
             "2": 1,
-            "3": 1,
-            "4": 1
+            "3": 1
         },
-        "b": {},
+        "b": {
+            "1": [
+                0, 1
+            ]
+        },
         "f": {
             "1": 1
         },
@@ -48,19 +51,7 @@ var expectedCoverage = {
                     "source": "file.js"
                 }
             },
-            "2": {  // default val = 123 initialisation
-                "start": {
-                    "line": 1,
-                    "column": 12,
-                    "source": "file.js"
-                },
-                "end": {
-                    "line": 1,
-                    "column": 21,
-                    "source": "file.js"
-                }
-            },
-            "3": {  // process.cwd();
+            "2": {  // process.cwd();
                 "start": {
                     "line": 2,
                     "column": 2,
@@ -72,7 +63,7 @@ var expectedCoverage = {
                     "source": "file.js"
                 }
             },
-            "4": {  // foo().next();
+            "3": {  // foo().next();
                 "start": {
                     "line": 4,
                     "column": 0,
@@ -85,7 +76,38 @@ var expectedCoverage = {
                 }
             }
         },
-        "branchMap": {}
+        "branchMap": {
+            "1": {
+                "line": 1,
+                "locations": [
+                  {
+                    "end": {
+                      "column": 18,
+                      "line": 1,
+                      "source": "file.js"
+                    },
+                    "start": {
+                      "column": 19,
+                      "line": 1,
+                      "source": "file.js"
+                    }
+                  },
+                  {
+                    "end": {
+                      "column": 22,
+                      "line": 1,
+                      "source": "file.js"
+                    },
+                    "start": {
+                      "column": 19,
+                      "line": 1,
+                      "source": "file.js"
+                    }
+                  }
+                ],
+                "type": "cond-expr"
+            }
+        }
     }
 }
 
