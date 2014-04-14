@@ -1,7 +1,7 @@
 import { setupCoverageTest } from "./common";
 
 var code = `async function foo() {
-  console.log("Generator.");
+  process.cwd();
 }
 foo();`;
 
@@ -47,7 +47,7 @@ var expectedCoverage = {
                     "source": "file.js"
                 }
             },
-            "2": {  // console.log("Generator");
+            "2": {  // process.cwd();
                 "start": {
                     "line": 2,
                     "column": 2,
@@ -55,7 +55,7 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 2,
-                    "column": 28,
+                    "column": 16,
                     "source": "file.js"
                 }
             },

@@ -1,6 +1,6 @@
 import { setupCoverageTest } from "./common";
 
-var code = `console.log("foo");`;
+var code = `process.cwd();`;
 var expectedCoverage = {
   "file.js": {
     "path": "file.js",
@@ -19,7 +19,7 @@ var expectedCoverage = {
         },
         "end": {
           "line": 1,
-          "column": 19,
+          "column": 14,
           "source": "file.js"
         }
       }

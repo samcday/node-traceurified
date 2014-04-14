@@ -1,6 +1,6 @@
 import { setupCoverageTest } from "./common";
 
-var code = `if(true) console.log("true"); else console.log("false");`;
+var code = `if(true) process.cwd(); else process.cwd();`;
 var expectedCoverage = {
     "file.js": {
         "path": "file.js",
@@ -23,7 +23,7 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 1,
-                    "column": 56,
+                    "column": 43,
                     "source": "file.js"
                 }
             },
@@ -35,19 +35,19 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 1,
-                    "column": 29,
+                    "column": 23,
                     "source": "file.js"
                 }
             },
             "3": {
                 "start": {
                     "line": 1,
-                    "column": 35,
+                    "column": 29,
                     "source": "file.js"
                 },
                 "end": {
                     "line": 1,
-                    "column": 56,
+                    "column": 43,
                     "source": "file.js"
                 }
             }

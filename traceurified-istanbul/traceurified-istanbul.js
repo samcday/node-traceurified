@@ -37,15 +37,24 @@ function prepareAst(filename, es5Ast, es6Ast) {
   // where things are.
 
   var visitor = new ParseTreeVisitor();
-  visitor.visitFunctionDeclaration = function(tree) {
-    if ((tree.functionKind.type === "*" || tree.functionKind.value === "async") && tree.location && tree.location.start.source.name === filename) {
+
+  function visitFunction(tree) {
+    if (tree.functionKind &&(tree.functionKind.type === "*" || tree.functionKind.value === "async") && tree.location && tree.location.start.source.name === filename) {
       generatorPositions.push({
         yields: [],
         gen: convertLocationNode(tree.location),
         body: convertLocationNode(tree.functionBody.location)
       });
     }
+  }
 
+  visitor.visitFunctionExpression = function(tree) {
+    visitFunction(tree);
+    ParseTreeVisitor.prototype.visitFunctionExpression.call(this, tree);
+  };
+
+  visitor.visitFunctionDeclaration = function(tree) {
+    visitFunction(tree);
     ParseTreeVisitor.prototype.visitFunctionDeclaration.call(this, tree);
   };
 
@@ -146,13 +155,12 @@ exports.prepareAst = function(filename, es5Ast, es6Ast) {
   var mozillaAst = new MozillaParseTreeTransformer().transformAny(es5Ast);
   prepareAst(filename, mozillaAst, es6Ast);
   return mozillaAst;
-}
+};
 
 exports.postProcessor = function(filename, original, compiled) {
-  var ast = traceurified.processedAst[filename];
-  var mozillaAst = new MozillaParseTreeTransformer().transformAny(ast);
-
-  prepareAst(mozillaAst);
+  var es5Ast = traceurified.processedAst[filename];
+  var es6Ast = traceurified.ast[filename];
+  var mozillaAst = exports.prepareAst(filename, es5Ast, es6Ast);
 
   try {
     var instrumentedCode = instrumenter.instrumentASTSync(mozillaAst, filename);
@@ -163,3 +171,20 @@ exports.postProcessor = function(filename, original, compiled) {
     throw e;
   }
 };
+
+if (process.env.npm_config_coverage) {
+  var istanbul = require("istanbul");
+  traceurified.postProcessors.push(exports.postProcessor);
+  var instrumenter = new istanbul.Instrumenter({noAutoWrap: true});
+
+  process.on("exit", function() {
+    var collector = new istanbul.Collector();
+
+    // console.log(JSON.stringify(global.__coverage__, null, 2));
+    collector.add(global.__coverage__);
+    var report = istanbul.Report.create("html", {
+        dir: process.cwd() + "/reports"
+    });
+    report.writeReport(collector, true);
+  });
+}

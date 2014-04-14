@@ -105,7 +105,7 @@ function Traceurified(filter) {
       es5Ast: es5Tree,
       es6Ast: es6Tree,
       sourceMap: options.sourceMap
-    }
+    };
   };
 
   function requireCompile(filename) {
@@ -143,6 +143,6 @@ function Traceurified(filter) {
   };
 
   return Traceurified;
-};
+}
 
 module.exports = Traceurified;
