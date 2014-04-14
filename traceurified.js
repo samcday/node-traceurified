@@ -33,8 +33,8 @@ function Traceurified(filter) {
   // * use source mapped positions, if available.
   // * filter out traceur eval frames.
   chain.filter.attach(function (error, frames) {
-    return frames.filter(function (callSite) {
-      if (callSite.isEval()) {
+    return frames.filter(function (callSite, idx) {
+      if (callSite.isEval() && idx > 0) {
         if (callSite.getEvalOrigin().indexOf("src/node/traceur.js") > -1) {
           return false;
         }
