@@ -1,12 +1,13 @@
 import { setupCoverageTest } from "./common";
 
-var code = `() => 123;`;
+var code = `() => { foo() }`;
 
 var expectedCoverage = {
     "file.js": {
         "path": "file.js",
         "s": {
-            "1": 1
+            "1": 1,
+            "2": 0
         },
         "b": {},
         "f": {
@@ -38,7 +39,19 @@ var expectedCoverage = {
                 },
                 "end": {
                     "line": 1,
-                    "column": 10,
+                    "column": 15,
+                    "source": "file.js"
+                }
+            },
+            "2": {  // foo()
+                "start": {
+                    "line": 1,
+                    "column": 8,
+                    "source": "file.js"
+                },
+                "end": {
+                    "line": 1,
+                    "column": 13,
                     "source": "file.js"
                 }
             }
@@ -47,4 +60,4 @@ var expectedCoverage = {
     }
 }
 
-describe("Basic arrow fn", setupCoverageTest.bind(null, code, expectedCoverage));
+describe("Block arrow fn", setupCoverageTest.bind(null, code, expectedCoverage));

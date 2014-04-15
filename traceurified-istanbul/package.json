@@ -4,7 +4,7 @@
   "description": "Istanbul integration for Traceurified.",
   "main": "traceurified-istanbul.js",
   "scripts": {
-    "test": "mocha --compilers js:traceurified-mocha -R spec test/arrow.js"
+    "test": "mocha --compilers js:traceurified-mocha -R spec"
   },
   "author": "Sam Day <sday@atlassian.com>",
   "license": "Commercial",
