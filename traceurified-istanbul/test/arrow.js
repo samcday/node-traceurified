@@ -6,17 +6,15 @@ var expectedCoverage = {
     "file.js": {
         "path": "file.js",
         "s": {
-            "1": 1,
-            "2": 1,
-            "3": 1
+            "1": 1
         },
         "b": {},
         "f": {
-            "1": 1
+            "1": 0
         },
         "fnMap": {
             "1": {
-                "name": "foo",
+                "name": "(anonymous_1)",
                 "line": 1,
                 "loc": {
                     "start": {
@@ -26,7 +24,7 @@ var expectedCoverage = {
                     },
                     "end": {
                         "line": 1,
-                        "column": 24
+                        "column": 9
                     }
                 }
             }
@@ -39,32 +37,8 @@ var expectedCoverage = {
                     "source": "file.js"
                 },
                 "end": {
-                    "line": 3,
-                    "column": 1,
-                    "source": "file.js"
-                }
-            },
-            "2": {  // process.cwd();
-                "start": {
-                    "line": 2,
-                    "column": 2,
-                    "source": "file.js"
-                },
-                "end": {
-                    "line": 2,
-                    "column": 16,
-                    "source": "file.js"
-                }
-            },
-            "3": {  // foo().next();
-                "start": {
-                    "line": 4,
-                    "column": 0,
-                    "source": "file.js"
-                },
-                "end": {
-                    "line": 4,
-                    "column": 6,
+                    "line": 1,
+                    "column": 9,
                     "source": "file.js"
                 }
             }

@@ -79,7 +79,7 @@ function prepareAst(filename, es5Ast, es6Ast) {
   };
 
   visitor.visitArrowFunctionExpression = function(tree) {
-    console.log("AN ARROW FUNCTION LOL");
+
   };
 
   visitor.visitAny(es6Ast);
@@ -90,6 +90,7 @@ function prepareAst(filename, es5Ast, es6Ast) {
   var generatorIdx = 0;
   var yieldIdx = 0;
   var inGenerator = false;
+  var markArrowFunction = false;
   estraverse.traverse(es5Ast, {
     enter: function(node, parent) {
       // Nuke location info that doesn't match our expected source file.
@@ -159,8 +160,18 @@ function prepareAst(filename, es5Ast, es6Ast) {
         node.consequent.loc.end.column = node.consequent.loc.start.column - 1;
         node.alternate.loc = JSON.parse(JSON.stringify(possibleDefaultParam.expr));
       }
+
+      if (node._meta && node._meta.fromArrow) {
+        markArrowFunction = node._meta.fromArrow;
+      }
     },
     leave: function(node, parent) {
+      if (node.type === "FunctionExpression" && markArrowFunction) {
+        node.loc = markArrowFunction.func;
+        node.body.loc = markArrowFunction.expr;
+        markArrowFunction = false;
+      }
+
       if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") {
         var generatorIdx = functionStack.pop();
         if (generatorIdx > -1) {
@@ -204,8 +215,9 @@ exports.prepareAst = function(filename, es5Ast, es6Ast) {
 
 exports.es5Transformer = function(instrumenter, filename, ast) {
   try {
-    var instrumentedCode = instrumenter.instrumentASTSync(mozillaAst, filename);
-    return instrumentedCode;
+    var instrumentedCode = instrumenter.instrumentASTSync(ast, filename);
+    // return instrumentedCode;
+    instrumenter.traceurifiedInstrumented[filename] = instrumentedCode;
   } catch(e) {
     console.log("Error while instrumenting " + filename);
     throw e;
@@ -213,29 +225,38 @@ exports.es5Transformer = function(instrumenter, filename, ast) {
 };
 
 exports.es6Transformer = function(filename, tree) {
-
   var visitor = new ParseTreeVisitor();
   visitor.visitArrowFunctionExpression = function(tree) {
-    console.log("Oh hey!");
-    tree.functionBody._meta = {isGenerator: true};
+    tree.functionBody._meta = {
+      fromArrow: {
+        func: convertLocationNode(tree.location),
+        expr: convertLocationNode(tree.functionBody.location)
+      }
+    };
     ParseTreeVisitor.prototype.visitArrowFunctionExpression.call(this, tree);
   };
 
   visitor.visitAny(tree);
 }
 
+exports.postProcessor = function(instrumenter, filename) {
+  return instrumenter.traceurifiedInstrumented[filename];
+}
+
 if (process.env.npm_config_coverage) {
   var istanbul = require("istanbul");
   var instrumenter = new istanbul.Instrumenter({noAutoWrap: true});
+  instrumenter.traceurifiedInstrumented = [];
 
   // traceurified.postProcessors.push(exports.postProcessor);
   traceurified.es6Transformers.push(exports.es6Transformer);
   traceurified.es5Transformers.push(exports.es5Transformer.bind(null, instrumenter));
+  traceurified.postProcessors.push(exports.postProcessor.bind(null, instrumenter));
 
   process.on("exit", function() {
     var collector = new istanbul.Collector();
 
-    console.log(JSON.stringify(global.__coverage__, null, 2));
+    // console.log(JSON.stringify(global.__coverage__, null, 2));
     collector.add(global.__coverage__);
     var report = istanbul.Report.create("html", {
         dir: process.cwd() + "/reports"

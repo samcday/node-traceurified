@@ -1,29 +1,21 @@
 "use strict";
 
+var traceur = require("traceur");
+var chain = require("stack-chain");
+var escodegen = require("escodegen");
+var sourcemap = require("source-map");
+var fs = require("fs");
+var Module = require("module");
+var MozillaParseTreeTransformer = require("./MozillaParseTreeTransformer");
+
+var SourceMapConsumer = sourcemap.SourceMapConsumer;
+var ErrorReporter = traceur.util.ErrorReporter;
+var FromOptionsTransformer = traceur.codegeneration.FromOptionsTransformer;
+var Parser = traceur.syntax.Parser;
+var SourceFile = traceur.syntax.SourceFile;
+var TreeWriter = traceur.outputgeneration.TreeWriter;
+
 function Traceurified(filter) {
-  var chain = require("stack-chain");
-  var traceur = require("traceur");
-  var escodegen = require("escodegen");
-  var sourcemap = require("source-map");
-  var fs = require("fs");
-  var Module = require("module");
-  var MozillaParseTreeTransformer = require("./MozillaParseTreeTransformer");
-
-  var SourceMapConsumer = sourcemap.SourceMapConsumer;
-  var ErrorReporter = traceur.util.ErrorReporter;
-  var FromOptionsTransformer = traceur.codegeneration.FromOptionsTransformer;
-  var Parser = traceur.syntax.Parser;
-  var SourceFile = traceur.syntax.SourceFile;
-  var TreeWriter = traceur.outputgeneration.TreeWriter;
-
-  Traceurified.traceur = traceur;
-  Traceurified.sourceMaps = {};
-  Traceurified.ast = {};
-  Traceurified.processedAst = {};
-  Traceurified.es6Transformers = [];
-  Traceurified.es5Transformers = [];
-  Traceurified.postProcessors = [];
-
   // TODO: make options configurable.
   traceur.options.annotations = true;
   traceur.options.asyncFunctions = true;
@@ -108,8 +100,6 @@ function Traceurified(filter) {
     if (reporter.hadError())
       throw new Error("Error transforming " + filename);
 
-    console.log(JSON.stringify(es5Tree, null, 2));
-    // process.exit();
     var mozillaAst = new MozillaParseTreeTransformer().transformAny(es5Tree);
 
     return mozillaAst;
@@ -175,16 +165,18 @@ function Traceurified(filter) {
       throw e;
     }
 
+    var source = result.source;
+
     Traceurified.sourceMaps[filename] = new SourceMapConsumer(result.sourceMap);
 
-    // Traceurified.postProcessors.forEach(function(postFn) {
-    //   var res = postFn(filename, original);
-    //   if (res) {
-    //     src = res;
-    //   }
-    // });
+    Traceurified.postProcessors.forEach(function(postProcessor) {
+      var res = postProcessor(filename);
+      if (res) {
+        source = res;
+      }
+    });
 
-    return result.source;
+    return source;
   }
 
   if (!filter) {
@@ -203,5 +195,13 @@ function Traceurified(filter) {
 
   return Traceurified;
 }
+
+Traceurified.traceur = traceur;
+Traceurified.sourceMaps = {};
+Traceurified.ast = {};
+Traceurified.processedAst = {};
+Traceurified.es6Transformers = [];
+Traceurified.es5Transformers = [];
+Traceurified.postProcessors = [];
 
 module.exports = Traceurified;
