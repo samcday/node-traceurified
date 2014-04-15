@@ -3,6 +3,9 @@
 var traceur = "undefined" !== typeof window ? window.traceur : require("traceur");
 
 var ParseTreeTransformer = traceur.System.get(traceur.System.map.traceur + "/src/codegeneration/ParseTreeTransformer").ParseTreeTransformer;
+var Token = traceur.System.get(traceur.System.map.traceur + "/src/syntax/Token").Token;
+var IdentifierToken = traceur.System.get(traceur.System.map.traceur + "/src/syntax/IdentifierToken").IdentifierToken;
+var KeywordToken = traceur.System.get(traceur.System.map.traceur + "/src/syntax/KeywordToken").KeywordToken;
 
 function MozillaParseTreeTransformer() {
   this.createNode = function(tree, data) {
@@ -20,32 +23,65 @@ function MozillaParseTreeTransformer() {
         }
       }
     }
+    data._meta = tree._meta;
     return data;
   }
 }
 
 MozillaParseTreeTransformer.prototype = Object.create(ParseTreeTransformer.prototype);
 
+MozillaParseTreeTransformer.prototype.transformToken = function(tree, token) {
+  if (token instanceof KeywordToken) {
+    return this.createNode(token, {
+      type: "Literal",
+      value: token.type,
+      raw: String(token.type)
+    });
+  }
+
+  if (token instanceof IdentifierToken) {
+    return this.createNode(token, {
+      type: "Identifier",
+      name: token.value
+    });
+  }
+
+  // It's a literal token.
+
+  var value = token.processedValue, raw = token.value;
+  // TODO: when does this happen? What we have here isn't sufficient, the 
+  // location data will be messed up.
+  if (value === Number(value) && value < 0) {
+    var newVal = Math.abs(value);
+
+    return this.createNode(token, {
+      type: "UnaryExpression",
+      operator: "-",
+      argument: this.createNode(token, {
+        type: "Literal",
+        value: newVal,
+        raw: String(newVal)
+      })
+    });
+  }
+
+  return this.createNode(token, {
+    type: "Literal",
+    value: value,
+    raw: raw
+  });
+};
+
 MozillaParseTreeTransformer.prototype.transformAny = function(tree) {
   if (!tree) {
     return;
   }
 
-  if (tree.type === "identifier") {
-    return this.transformIdentifier(tree);
+  if (tree instanceof Token) {
+    return this.transformToken(tree);
   }
 
-  // console.log(tree.type);
-
-  console.log(tree.type);
   return ParseTreeTransformer.prototype.transformAny.call(this, tree);
-};
-
-MozillaParseTreeTransformer.prototype.transformIdentifier = function(tree) {
-  return this.createNode(tree, {
-    type: "Identifier",
-    name: tree.value
-  });
 };
 
 MozillaParseTreeTransformer.prototype.transformScript = function(tree) {
@@ -107,32 +143,7 @@ MozillaParseTreeTransformer.prototype.transformExpressionStatement = function(tr
 };
 
 MozillaParseTreeTransformer.prototype.transformLiteralExpression = function(tree) {
-  var token = tree.literalToken;
-  var value = token.processedValue, raw = token.value;
-  if (token.type === "true" || token.type === "false") {
-    value = Boolean(token.type);
-    raw = token.type;
-  }
-
-  if (value === Number(value) && value < 0) {
-    var newVal = Math.abs(value);
-
-    return this.createNode(tree, {
-      type: "UnaryExpression",
-      operator: "-",
-      argument: {
-        type: "Literal",
-        value: newVal,
-        raw: String(newVal)
-      }
-    });
-  }
-
-  return this.createNode(tree, {
-    type: "Literal",
-    value: value,
-    raw: raw
-  });;
+  return this.transformAny(tree.literalToken);
 };
 
 MozillaParseTreeTransformer.prototype.transformVariableStatement = function(tree) {
@@ -292,11 +303,14 @@ MozillaParseTreeTransformer.prototype.transformSetAccessor = function(tree) {
 
 MozillaParseTreeTransformer.prototype.transformMemberExpression = function(tree) {
   var computed = tree.type === "MEMBER_LOOKUP_EXPRESSION";
+  var object = this.transformAny(tree.operand);
+  var property = computed ? this.transformAny(tree.memberExpression) : this.transformAny(tree.memberName);
+
   return this.createNode(tree, {
     type: "MemberExpression",
     computed: computed,
-    object: this.transformAny(tree.operand),
-    property: computed ? this.transformAny(tree.memberExpression) : this.transformAny(tree.memberName)
+    object: object,
+    property: property
   });
 };
 
@@ -421,6 +435,13 @@ MozillaParseTreeTransformer.prototype.transformWhileStatement = function(tree) {
 
 MozillaParseTreeTransformer.prototype.transformFinally = function(tree) {
   return this.transformAny(tree.block);
+};
+
+MozillaParseTreeTransformer.prototype.transformCommaExpression = function(tree) {
+  return this.createNode(tree, {
+    type: "SequenceExpression",
+    expressions: this.transformList(tree.expressions)
+  })
 };
 
 if ("undefined" !== typeof module && module.exports) {

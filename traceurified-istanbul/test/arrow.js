@@ -1,9 +1,6 @@
 import { setupCoverageTest } from "./common";
 
-var code = `function foo(val = 123) {
-  process.cwd();
-}
-foo();`;
+var code = `() => 123;`;
 
 var expectedCoverage = {
     "file.js": {
@@ -13,11 +10,7 @@ var expectedCoverage = {
             "2": 1,
             "3": 1
         },
-        "b": {
-            "1": [
-                0, 1
-            ]
-        },
+        "b": {},
         "f": {
             "1": 1
         },
@@ -76,39 +69,8 @@ var expectedCoverage = {
                 }
             }
         },
-        "branchMap": {
-            "1": {
-                "line": 1,
-                "locations": [
-                  {
-                    "end": {
-                      "column": 18,
-                      "line": 1,
-                      "source": "file.js"
-                    },
-                    "start": {
-                      "column": 19,
-                      "line": 1,
-                      "source": "file.js"
-                    }
-                  },
-                  {
-                    "end": {
-                      "column": 22,
-                      "line": 1,
-                      "source": "file.js"
-                    },
-                    "start": {
-                      "column": 19,
-                      "line": 1,
-                      "source": "file.js"
-                    }
-                  }
-                ],
-                "type": "cond-expr"
-            }
-        }
+        "branchMap": {}
     }
 }
 
-describe("Default parameter", setupCoverageTest.bind(null, code, expectedCoverage, true));
+describe.only("Basic arrow fn", setupCoverageTest.bind(null, code, expectedCoverage, true));

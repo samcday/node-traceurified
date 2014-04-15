@@ -11,6 +11,7 @@
   "dependencies": {
     "source-map": "^0.1.33",
     "stack-chain": "^1.0.0",
-    "traceur": "0.0.33"
+    "traceur": "0.0.33",
+    "escodegen": "^1.3.2"
   }
 }

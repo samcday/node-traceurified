@@ -79,7 +79,13 @@ function prepareAst(filename, es5Ast, es6Ast) {
     // ParseTreeVisitor.prototype.visitFormalParameter.apply(this, tree);
   };
 
+  visitor.visitArrowFunctionExpression = function(tree) {
+    console.log("AN ARROW FUNCTION LOL");
+  };
+
   visitor.visitAny(es6Ast);
+
+  // console.log(JSON.stringify(defaultParams, null, 2));
 
   var functionStack = [];
   var generatorIdx = 0;
@@ -108,6 +114,7 @@ function prepareAst(filename, es5Ast, es6Ast) {
       if (node.type === "CallExpression" &&
           node.callee.type === "MemberExpression" &&
           node.callee.object.name === "$traceurRuntime" &&
+          node.callee &&
           (node.callee.property.name === "generatorWrap" ||
            node.callee.property.name === "asyncWrap")) {
         functionStack.pop();
@@ -175,23 +182,27 @@ function prepareAst(filename, es5Ast, es6Ast) {
 }
 
 /**
- * Takes an input Traceur-format AST and outputs a cleaned up SpiderMonkey AST,
- * ready to be fed into Istanbul.
+ * Prepares the given AST for Istanbul instrumentation.
  */
 exports.prepareAst = function(filename, es5Ast, es6Ast) {
-  var mozillaAst = new MozillaParseTreeTransformer().transformAny(es5Ast);
-  prepareAst(filename, mozillaAst, es6Ast);
+  prepareAst(filename, es5Ast, es6Ast);
   return mozillaAst;
 };
 
-exports.postProcessor = function(filename, original, compiled) {
-  var es5Ast = traceurified.processedAst[filename];
-  var es6Ast = traceurified.ast[filename];
-  var mozillaAst = exports.prepareAst(filename, es5Ast, es6Ast);
+// exports.postProcessor = function(filename, original, compiled) {
+//   var es5Ast = traceurified.processedAst[filename];
+//   var es6Ast = traceurified.ast[filename];
+//   var mozillaAst = exports.prepareAst(filename, es5Ast, es6Ast);
 
+//   console.log(JSON.stringify(mozillaAst, null, 2));
+//   console.log(require("escodegen").generate(mozillaAst), null, 2);
+
+
+// };
+
+exports.es5Transformer = function(instrumenter, filename, ast) {
   try {
     var instrumentedCode = instrumenter.instrumentASTSync(mozillaAst, filename);
-    // store.set(filename, original);
     return instrumentedCode;
   } catch(e) {
     console.log("Error while instrumenting " + filename);
@@ -199,15 +210,30 @@ exports.postProcessor = function(filename, original, compiled) {
   }
 };
 
+exports.es6Transformer = function(filename, tree) {
+
+  var visitor = new ParseTreeVisitor();
+  visitor.visitArrowFunctionExpression = function(tree) {
+    console.log("Oh hey!");
+    tree.functionBody._meta = {isGenerator: true};
+    ParseTreeVisitor.prototype.visitArrowFunctionExpression.call(this, tree);
+  };
+
+  visitor.visitAny(tree);
+}
+
 if (process.env.npm_config_coverage) {
   var istanbul = require("istanbul");
-  traceurified.postProcessors.push(exports.postProcessor);
   var instrumenter = new istanbul.Instrumenter({noAutoWrap: true});
+
+  // traceurified.postProcessors.push(exports.postProcessor);
+  traceurified.es6Transformers.push(exports.es6Transformer);
+  traceurified.es5Transformers.push(exports.es5Transformer.bind(null, instrumenter));
 
   process.on("exit", function() {
     var collector = new istanbul.Collector();
 
-    // console.log(JSON.stringify(global.__coverage__, null, 2));
+    console.log(JSON.stringify(global.__coverage__, null, 2));
     collector.add(global.__coverage__);
     var report = istanbul.Report.create("html", {
         dir: process.cwd() + "/reports"
