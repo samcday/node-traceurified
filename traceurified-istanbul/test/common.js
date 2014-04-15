@@ -8,10 +8,8 @@ export function setupCoverageTest(code, expectedCoverage, debug) {
   it("should report coverage correctly", () => {
     var es6Ast = parseES6("file.js", code);
     es6Transformer("file.js", es6Ast);
-    console.log("LOL", JSON.stringify(es6Ast, null, 2));
     var es5Ast = transformToES5("file.js", es6Ast);
-    console.log(JSON.stringify(es5Ast, null, 2));
-    // var ast = prepareAst("file.js", es5Ast, es6Ast);
+    prepareAst("file.js", es5Ast, es6Ast);
 
     if (debug) {
       console.log(JSON.stringify(es5Ast, null, 2));

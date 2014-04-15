@@ -1,7 +1,6 @@
 var estraverse = require("estraverse");
 var traceurified = require("traceurified");
 var traceur = traceurified.traceur;
-var MozillaParseTreeTransformer = require("./MozillaParseTreeTransformer");
 
 var ParseTreeVisitor = traceur.System.get(traceur.System.map.traceur + "/src/syntax/ParseTreeVisitor").ParseTreeVisitor;
 
@@ -113,18 +112,12 @@ function prepareAst(filename, es5Ast, es6Ast) {
       // just entered a generator function.
       if (node.type === "CallExpression" &&
           node.callee.type === "MemberExpression" &&
+          node.callee.object &&
           node.callee.object.name === "$traceurRuntime" &&
-          node.callee &&
-          (node.callee.property.name === "generatorWrap" ||
-           node.callee.property.name === "asyncWrap")) {
+          node.callee.property &&
+          /^(generator|async)Wrap$/.test(node.callee.property.name)) {
         functionStack.pop();
         functionStack.push(generatorIdx++);
-      }
-
-      // Istanbul doesn't really like it when a FunctionExpression has a body
-      // with no location information.
-      if (node.type === "FunctionExpression" && node.body.type === "BlockStatement" && !node.body.loc) {
-        node.body.loc = node.loc;
       }
 
       if (node.type === "ReturnStatement" && !node.loc && inGenerator) {
@@ -177,6 +170,16 @@ function prepareAst(filename, es5Ast, es6Ast) {
         yieldIdx = 0;
         inGenerator = functionStack.length >= 2 && functionStack[functionStack.length - 2] > -1;
       }
+
+      // if (node.type === "FunctionExpression" && !node.loc && node.body.loc) {
+      //   node.loc = node.body.loc;
+      // }
+
+      // Istanbul doesn't really like it when a FunctionExpression has a body
+      // with no location information.
+      if (node.type === "FunctionExpression" && node.body.type === "BlockStatement" && !node.body.loc) {
+        node.body.loc = node.loc;
+      }
     }
   });
 }
@@ -186,7 +189,6 @@ function prepareAst(filename, es5Ast, es6Ast) {
  */
 exports.prepareAst = function(filename, es5Ast, es6Ast) {
   prepareAst(filename, es5Ast, es6Ast);
-  return mozillaAst;
 };
 
 // exports.postProcessor = function(filename, original, compiled) {

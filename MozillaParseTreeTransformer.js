@@ -6,6 +6,7 @@ var ParseTreeTransformer = traceur.System.get(traceur.System.map.traceur + "/src
 var Token = traceur.System.get(traceur.System.map.traceur + "/src/syntax/Token").Token;
 var IdentifierToken = traceur.System.get(traceur.System.map.traceur + "/src/syntax/IdentifierToken").IdentifierToken;
 var KeywordToken = traceur.System.get(traceur.System.map.traceur + "/src/syntax/KeywordToken").KeywordToken;
+var REGULAR_EXPRESSION = traceur.System.get(traceur.System.map.traceur + "/src/syntax/TokenType").REGULAR_EXPRESSION;
 
 function MozillaParseTreeTransformer() {
   this.createNode = function(tree, data) {
@@ -30,7 +31,7 @@ function MozillaParseTreeTransformer() {
 
 MozillaParseTreeTransformer.prototype = Object.create(ParseTreeTransformer.prototype);
 
-MozillaParseTreeTransformer.prototype.transformToken = function(tree, token) {
+MozillaParseTreeTransformer.prototype.transformToken = function(token) {
   if (token instanceof KeywordToken) {
     return this.createNode(token, {
       type: "Literal",
@@ -48,7 +49,14 @@ MozillaParseTreeTransformer.prototype.transformToken = function(tree, token) {
 
   // It's a literal token.
 
-  var value = token.processedValue, raw = token.value;
+  var raw = token.value, value;
+
+  if (token.type === REGULAR_EXPRESSION) {
+    value = raw;
+  } else {
+   value = token.processedValue;
+  }
+
   // TODO: when does this happen? What we have here isn't sufficient, the 
   // location data will be messed up.
   if (value === Number(value) && value < 0) {
@@ -143,7 +151,9 @@ MozillaParseTreeTransformer.prototype.transformExpressionStatement = function(tr
 };
 
 MozillaParseTreeTransformer.prototype.transformLiteralExpression = function(tree) {
-  return this.transformAny(tree.literalToken);
+  var node = this.transformAny(tree.literalToken);
+  node._meta = tree._meta;
+  return node;
 };
 
 MozillaParseTreeTransformer.prototype.transformVariableStatement = function(tree) {
