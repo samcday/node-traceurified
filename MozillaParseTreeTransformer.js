@@ -32,11 +32,11 @@ function MozillaParseTreeTransformer() {
 MozillaParseTreeTransformer.prototype = Object.create(ParseTreeTransformer.prototype);
 
 MozillaParseTreeTransformer.prototype.transformToken = function(token) {
-  if (token instanceof KeywordToken) {
+  if (token.isKeyword()) {
     return this.createNode(token, {
       type: "Literal",
-      value: token.type,
-      raw: String(token.type)
+      value: eval(token.type),
+      raw: token.type
     });
   }
 
@@ -48,6 +48,8 @@ MozillaParseTreeTransformer.prototype.transformToken = function(token) {
   }
 
   // It's a literal token.
+
+  // console.log("Bitch.", token.value, token.processedValue);
 
   var raw = token.value, value;
 
