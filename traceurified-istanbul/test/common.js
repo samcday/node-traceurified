@@ -4,6 +4,14 @@ import { Instrumenter } from "istanbul";
 import { parseES6, transformToES5 } from "traceurified";
 import { es6Transformer, es5Transformer } from "../traceurified-istanbul";
 
+import { createHash } from "crypto";
+
+function sha1(str) {
+  var hash = createHash("sha1");
+  hash.update(str);
+  return hash.digest("hex");
+}
+
 export function setupCoverageTest(code, expectedCoverage, debug) {
   it("should report coverage correctly", () => {
     var es6Ast = parseES6("file.js", code);
@@ -14,7 +22,7 @@ export function setupCoverageTest(code, expectedCoverage, debug) {
 
     es6Transformer("file.js", es6Ast);
 
-    var coverageVar = `__traceurifiedIstanbulCov_${Date.now()}`
+    var coverageVar = `__traceurifiedIstanbulCov_${sha1(code)}`
     var instrumenter = new Instrumenter({coverageVariable: coverageVar, noAutoWrap: true, debug: debug, walkDebug: debug});
     instrumenter.traceurifiedInstrumented = [];
 

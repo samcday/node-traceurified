@@ -4,6 +4,7 @@ var traceur = traceurified.traceur;
 
 var ParseTreeVisitor = traceur.System.get(traceur.System.map.traceur + "/src/syntax/ParseTreeVisitor").ParseTreeVisitor;
 var ParseTreeFactory = traceur.System.get(traceur.System.map.traceur + "/src/codegeneration/ParseTreeFactory");
+var ParseTreeType = traceur.System.get(traceur.System.map.traceur + "/src/syntax/trees/ParseTreeType");
 
 // Converts a Traceur source location item to a Spidermonkey AST one.
 function convertLocationNode(location) {
@@ -82,13 +83,27 @@ function transformEs6Tree(filename, tree) {
   };
 
   visitor.visitArrowFunctionExpression = function(tree) {
+    var isBlock = tree.functionBody.type === ParseTreeType.FUNCTION_BODY,
+        funcLoc = convertLocationNode(tree.location),
+        exprLoc = convertLocationNode(tree.functionBody.location);
+
+    if (exprLoc.end.line === funcLoc.end.line &&
+        exprLoc.end.column > funcLoc.end.column) {
+      funcLoc.end.column = exprLoc.end.column;
+    }
+
     tree.functionBody._meta = {
       fromArrow: {
-        func: convertLocationNode(tree.location),
-        expr: convertLocationNode(tree.functionBody.location)
+        func: funcLoc,
+        expr: exprLoc,
+        isBlock: isBlock
       }
     };
     ParseTreeVisitor.prototype.visitArrowFunctionExpression.call(this, tree);
+  };
+
+  visitor.visitArrayComprehension = function(tree) {
+    addMeta(tree.expression, "comprehension", true);
   };
 
   visitor.visitAny(tree);
@@ -115,6 +130,11 @@ function fixEs5Tree(filename, es5Ast) {
         functionStack.push(node);
       }
 
+      if (node._meta && node._meta.comprehension) {
+        parent.loc = node.loc;
+        parent._meta = node._meta;
+      }
+
       // Did we just find a generator marker?
       if (node._meta && node._meta.generator) {
         // The generator we're inside of is the second-from-last in our stack.
@@ -132,7 +152,10 @@ function fixEs5Tree(filename, es5Ast) {
       if (node._meta && node._meta.fromArrow) {
         var arrowFn = functionStack[functionStack.length - 1];
         arrowFn.loc = node._meta.fromArrow.func;
-        arrowFn.body.loc = node._meta.fromArrow.expr;
+
+        if (node.type !== "BlockStatement") {
+          arrowFn.body.loc = parent.loc = node._meta.fromArrow.expr;
+        }
       }
 
       if (node._meta && node._meta.defaultInitialiser) {
@@ -149,6 +172,10 @@ function fixEs5Tree(filename, es5Ast) {
     leave: function(node, parent) {
       if (node.type === "FunctionExpression" || node.type === "FunctionDeclaration") {
         functionStack.pop();
+      }
+
+      if (node._meta && node._meta.comprehension) {
+        parent.loc = node.loc;
       }
 
       // // Istanbul doesn't really like it when a FunctionExpression has a body
@@ -197,7 +224,6 @@ if (process.env.npm_config_coverage) {
   process.on("exit", function() {
     var collector = new istanbul.Collector();
 
-    console.log(JSON.stringify(global.__coverage__, null, 2));
     collector.add(global.__coverage__);
     var report = istanbul.Report.create("html", {
         dir: process.cwd() + "/reports"
