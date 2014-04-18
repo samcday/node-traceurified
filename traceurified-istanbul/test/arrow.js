@@ -6,7 +6,8 @@ var expectedCoverage = {
     "file.js": {
         "path": "file.js",
         "s": {
-            "1": 1
+            "1": 1,
+            "2": 0
         },
         "b": {},
         "f": {
@@ -39,6 +40,18 @@ var expectedCoverage = {
                 "end": {
                     "line": 1,
                     "column": 10,
+                    "source": "file.js"
+                }
+            },
+            "2": {  // 123 expression
+                "start": {
+                    "line": 1,
+                    "column": 6,
+                    "source": "file.js"
+                },
+                "end": {
+                    "line": 1,
+                    "column": 9,
                     "source": "file.js"
                 }
             }
