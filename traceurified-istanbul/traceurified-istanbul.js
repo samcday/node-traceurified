@@ -41,10 +41,6 @@ function addMeta(tree, key, value) {
 function transformEs6Tree(filename, tree) {
   var visitor = new ParseTreeVisitor();
 
-  // We save some stuff in the root of the tree.
-  // var generatorPositions = addMeta(tree, "generatorPositions", []);
-  // var defaultParams = addMeta(tree, "defaultParams", []);
-
   function visitFunction(tree) {
     if (tree.isGenerator() || tree.isAsyncFunction()) {
       var marker = ParseTreeFactory.createExpressionStatement(ParseTreeFactory.createStringLiteral("traceurified-istanbul"));
@@ -104,6 +100,15 @@ function transformEs6Tree(filename, tree) {
 
   visitor.visitArrayComprehension = function(tree) {
     addMeta(tree.expression, "comprehension", true);
+  };
+
+  visitor.visitClassDeclaration = function(tree) {
+    addMeta(tree, "isClass", true);
+    tree.elements.forEach(function(element) {
+      addMeta(element, "inClass", true);
+      addMeta(element.functionBody, "inClass", true);
+    });
+    ParseTreeVisitor.prototype.visitClassExpression.call(this, tree);
   };
 
   visitor.visitAny(tree);
@@ -180,9 +185,10 @@ function fixEs5Tree(filename, es5Ast) {
 
       // // Istanbul doesn't really like it when a FunctionExpression has a body
       // // with no location information.
-      // if (node.type === "FunctionExpression" && node.body.type === "BlockStatement" && !node.body.loc) {
-      //   node.body.loc = node.loc;
-      // }
+      if (node.type === "FunctionExpression" && node.body.type === "BlockStatement" && !node.body.loc) {
+        // delete node.loc;
+        node.body.loc = node.loc;
+      }
     }
   });
 }
