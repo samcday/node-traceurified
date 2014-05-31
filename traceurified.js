@@ -6,7 +6,7 @@ var escodegen = require("escodegen");
 var sourcemap = require("source-map");
 var fs = require("fs");
 var Module = require("module");
-var MozillaParseTreeTransformer = require("./MozillaParseTreeTransformer");
+var MozillaParseTreeTransformer = require("traceur-mozilla-ast").MozillaParseTreeTransformer;
 
 var SourceMapConsumer = sourcemap.SourceMapConsumer;
 var ErrorReporter = traceur.util.ErrorReporter;
