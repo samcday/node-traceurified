@@ -167,6 +167,7 @@ function Traceurified(filter) {
 
     var source = result.source;
 
+    Traceurified.rawSourceMaps[filename] = result.sourceMap;
     Traceurified.sourceMaps[filename] = new SourceMapConsumer(result.sourceMap);
 
     Traceurified.postProcessors.forEach(function(postProcessor) {
@@ -185,10 +186,69 @@ function Traceurified(filter) {
     filters.push(filter);
   }
 
+  var isDebug = process.env.NODE_ENV !== "production",
+      getCompileCache, saveCompileCache;
+
+  if (isDebug) {
+    var sha1 = require("sha1"),
+        os = require("os"),
+        path = require("path"),
+        mkdirp = require("mkdirp").sync,
+        tmpDir = path.join(os.tmpdir(), "traceurified-cache", sha1(module.parent.id));
+
+    mkdirp(tmpDir);
+
+    getCompileCache = function(filename) {
+      var cachedPath = path.join(tmpDir, sha1(filename)),
+          fileStat = fs.statSync(filename);
+
+      var cachedStat;
+
+      try {
+        cachedStat = fs.statSync(cachedPath);
+      } catch(err) {
+        return;
+      }
+
+      if (fileStat.mtime <= cachedStat.mtime) {
+        var cached = JSON.parse(fs.readFileSync(cachedPath, "utf8"));
+        Traceurified.sourceMaps[filename] = new SourceMapConsumer(cached.map);
+        return cached.source;
+      }
+    };
+
+    saveCompileCache = function(filename, source) {
+      fs.writeFileSync(path.join(tmpDir, sha1(filename)), JSON.stringify({
+        source: source,
+        map: Traceurified.rawSourceMaps[filename]
+      }));
+    };
+  }
+
+  Traceurified._totalCompileTime = 0;
   Module._extensions[".js"] = function(module, filename) {
     if (shouldCompile(filename)) {
-      var source = requireCompile(filename);
-      return module._compile(source, filename);
+      var start = Date.now();
+
+      try {
+        // Attempt to resolve this request from cache.
+        if (isDebug) {
+          var cached = getCompileCache(filename);
+          if (cached) {
+            Traceurified._totalCompileTime += Date.now() - start;
+            return module._compile(cached, filename);
+          }
+        }
+
+        var source = requireCompile(filename);
+        Traceurified._totalCompileTime += Date.now() - start;
+        if (isDebug) {
+          saveCompileCache(filename, source);
+        }
+
+        return module._compile(source, filename);
+      } finally {
+      }
     }
     return originalRequireJs(module, filename);
   };
@@ -198,6 +258,7 @@ function Traceurified(filter) {
 
 Traceurified.traceur = traceur;
 Traceurified.sourceMaps = {};
+Traceurified.rawSourceMaps = {};
 Traceurified.ast = {};
 Traceurified.processedAst = {};
 Traceurified.es6Transformers = [];
