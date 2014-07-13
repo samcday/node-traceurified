@@ -50,3 +50,7 @@ require("traceurified")(function(file) {
 ```
 
 The main (and only) API for this library. The function passed in is used as a filter to determine if the given `file` path should be compiled using Traceur, or intepreted as vanilla ES5.
+
+## License
+
+This project is licensed under [Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0). Please see accompanying [LICENSE](LICENSE) file.
