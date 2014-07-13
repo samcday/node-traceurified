@@ -15,6 +15,9 @@
     "source-map": "^0.1.33",
     "stack-chain": "^1.0.0",
     "traceur": "0.0.49",
-    "traceur-mozilla-ast": "0.0.6"
+    "traceur-mozilla-ast": "0.0.7"
+  },
+  "publishConfig": {
+    "registry": "https://registry.npmjs.org"
   }
 }
