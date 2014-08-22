@@ -1,6 +1,6 @@
 {
   "name": "traceurified",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Harmony in your Node like what.",
   "main": "traceurified.js",
   "scripts": {
