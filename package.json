@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "traceur-node": "./bin/traceur-node"
+  },
   "author": "Sam Day <sday@atlassian.com>",
   "license": "Apache 2.0",
   "dependencies": {
