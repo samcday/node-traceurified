@@ -1,11 +1,13 @@
 "use strict";
 
+var vm = require("vm");
+var fs = require("fs");
+var Module = require("module");
+
 var traceur = require("traceur");
 var chain = require("stack-chain");
 var escodegen = require("escodegen");
 var sourcemap = require("source-map");
-var fs = require("fs");
-var Module = require("module");
 var MozillaParseTreeTransformer = require("traceur-mozilla-ast").MozillaParseTreeTransformer;
 
 var SourceMapConsumer = sourcemap.SourceMapConsumer;
@@ -155,6 +157,19 @@ function Traceurified(filter) {
     // };
   };
 
+  function runInSandbox(source, filename, module) {
+    // console.log(source);
+    var ctx = vm.createContext({
+      console: console,
+      require: require,
+      process: process,
+      module: module,
+      exports: module.exports,
+    });
+    vm.runInContext(fs.readFileSync(require.resolve("traceur/bin/traceur-runtime")), ctx);
+    vm.runInContext(source, ctx, filename);
+  }
+
   function requireCompile(filename) {
     var original = fs.readFileSync(filename, "utf-8");
 
@@ -232,13 +247,13 @@ function Traceurified(filter) {
 
       try {
         // Attempt to resolve this request from cache.
-        if (isDebug) {
-          var cached = getCompileCache(filename);
-          if (cached) {
-            Traceurified._totalCompileTime += Date.now() - start;
-            return module._compile(cached, filename);
-          }
-        }
+        // if (isDebug) {
+        //   var cached = getCompileCache(filename);
+        //   if (cached) {
+        //     Traceurified._totalCompileTime += Date.now() - start;
+        //     return module._compile(cached, filename);
+        //   }
+        // }
 
         var source = requireCompile(filename);
         Traceurified._totalCompileTime += Date.now() - start;
@@ -246,7 +261,7 @@ function Traceurified(filter) {
           saveCompileCache(filename, source);
         }
 
-        return module._compile(source, filename);
+        return runInSandbox(source, filename, module);
       } finally {
       }
     }
