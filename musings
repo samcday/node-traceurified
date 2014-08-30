@@ -18,3 +18,21 @@ var traceurified = require("traceurified");
 traceurified.entrypoint(module, "./azumio.js");
 
 traceurified.entrypoint will look for a ".traceurified-dist" file in the directory of the module. If one exists, it will load the given file in a sandbox. Otherwise, it will compile the file on the fly in the current (main) context.
+
+
+
+For application development.
+
+entrypoint.js
+=============
+
+var traceurified = require("traceurified");
+
+traceurified.hook(function(file) {
+  return file.is.es6;
+});
+
+require("./my-es6-code");
+
+
+traceurified.hook is a little different. It never checks to see if there's a Traceur-precompiled file present, it simply monkey patches require() calls and away you go.
