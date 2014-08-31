@@ -28,6 +28,8 @@ entrypoint.js
 
 var traceurified = require("traceurified");
 
+traceurified.hook();
+
 traceurified.hook(function(file) {
   return file.is.es6;
 });
@@ -35,4 +37,4 @@ traceurified.hook(function(file) {
 require("./my-es6-code");
 
 
-traceurified.hook is a little different. It never checks to see if there's a Traceur-precompiled file present, it simply monkey patches require() calls and away you go.
+traceurified.hook is a little different. It never checks to see if there's a Traceur-precompiled file present, it simply monkey patches require() calls and away you go. traceurified.hook() will be default compile all files local to the current module, but will NOT compile anything found in the node_modules directory.
