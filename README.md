@@ -1,5 +1,7 @@
 # traceurified
 
+**This project lives at https://bitbucket.org/samcday/node-traceurified. This repository is a mirror.**
+
 Easily use Google's awesome-sauce [traceur-compiler](https://github.com/google/traceur-compiler) in your Node projects.
 
 *bootstrap.js*

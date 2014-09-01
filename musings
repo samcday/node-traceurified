@@ -1,0 +1,40 @@
+Traceurified API
+
+Traceurified can be used in one of two ways: for ES6 libraries, and for applications.
+
+In the case of ES6 libraries, Traceurified will assist in doing offline compilation prepackaging time. The compiled modules will actually be run in a Node.js sandboxed VM, so that multiple versions of the traceur runtime may exist at runtime. Traceurified itself will handle creation of these sandboxes. Sandboxes will be created for each unique version of Traceur. Traceurified itself will use global.__magic__ in order to know about different versions of Traceurified that exist at runtime, to ensure sandboxes are created minimally. Actually, it won't do that last part for initial implementation, since it complicated things rather a lot.
+
+Traceurified can also be used for applications proper. In this case, application code is compiled on the fly at runtime by Traceur. Traceurified will handle generating sourcemaps and mapping lines. It's interesting to note that libraries will most likely use this approach for local development and testing.
+
+
+
+
+For library development.
+
+entrypoint.js
+=============
+
+var traceurified = require("traceurified");
+traceurified.entrypoint(module, "./azumio.js");
+
+traceurified.entrypoint will look for a ".traceurified-dist" file in the directory of the module. If one exists, it will load the given file in a sandbox. Otherwise, it will compile the file on the fly in the current (main) context.
+
+
+
+For application development.
+
+entrypoint.js
+=============
+
+var traceurified = require("traceurified");
+
+traceurified.hook();
+
+traceurified.hook(function(file) {
+  return file.is.es6;
+});
+
+require("./my-es6-code");
+
+
+traceurified.hook is a little different. It never checks to see if there's a Traceur-precompiled file present, it simply monkey patches require() calls and away you go. traceurified.hook() will be default compile all files local to the current module, but will NOT compile anything found in the node_modules directory.

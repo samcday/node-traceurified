@@ -3,8 +3,13 @@
 var child_process = require("child_process");
 var path = require("path");
 
+var ignore = [];
+global.bypassTraceur = function(id) {
+  ignore.push(require.resolve(id));
+};
+
 require("../traceurified")(function(file) {
-  return true;
+  return ignore.indexOf(file) < 0;
 });
 
 require(path.join(process.cwd(), process.argv[2]));
